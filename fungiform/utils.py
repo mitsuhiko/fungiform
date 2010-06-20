@@ -15,6 +15,39 @@ from itertools import izip, imap
 _missing = object()
 
 
+def get_current_url(environ):
+    """A handy helper function that recreates the full URL for the current
+    request.
+
+    :param environ: the WSGI environment to get the current URL from.
+    """
+    tmp = [environ['wsgi.url_scheme'], '://', get_host(environ)]
+    cat = tmp.append
+    cat(urllib.quote(environ.get('SCRIPT_NAME', '').rstrip('/')))
+    cat(urllib.quote('/' + environ.get('PATH_INFO', '').lstrip('/')))
+    qs = environ.get('QUERY_STRING')
+    if qs:
+        cat('?' + qs)
+    return ''.join(tmp)
+
+
+def get_host(environ):
+    """Return the real host for the given WSGI environment.  This takes care
+    of the `X-Forwarded-Host` header.
+
+    :param environ: the WSGI environment to get the host of.
+    """
+    if 'HTTP_X_FORWARDED_HOST' in environ:
+        return environ['HTTP_X_FORWARDED_HOST']
+    elif 'HTTP_HOST' in environ:
+        return environ['HTTP_HOST']
+    result = environ['SERVER_NAME']
+    if (environ['wsgi.url_scheme'], environ['SERVER_PORT']) not \
+       in (('https', '443'), ('http', '80')):
+        result += ':' + environ['SERVER_PORT']
+    return result
+
+
 def _force_list(value):
     """If the value is not a list, make it one."""
     if value is None:

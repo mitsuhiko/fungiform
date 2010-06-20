@@ -41,6 +41,12 @@ from fungiform.redirects import get_redirect_target
 from fungiform.csrf import get_csrf_token, invalidate_csrf_token
 
 
+__all__ = ['FormBase', 'Field', 'Mapping', 'Multiple', 'CommaSeparated',
+           'LineSeparated', 'TextField', 'ChoiceField',
+           'MultiChoiceField', 'IntegerField', 'BooleanField',
+           'FormBase']
+
+
 _last_position_hint = -1
 _position_hint_lock = Lock()
 
@@ -1066,6 +1072,9 @@ class FormBase(object):
         `self.request_info` is set to the request info passed or the
         one looked up by `_lookup_request_info`.
         """
+        env = self._get_wsgi_environ()
+        if env is not None:
+            return get_current_url(env)
         return ''
 
     def _autodiscover_data(self):
