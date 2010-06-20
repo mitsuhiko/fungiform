@@ -94,7 +94,7 @@ def get_redirect_target(environ, user_url=None, invalid_targets=(),
         if to_check[:4] != check_parts[:4]:
             return False
         args = urldecode(to_check[4])
-        for key, value in args.iteritems():
+        for key, value in args:
             if check_query.get(key) != value:
                 return False
         return True
