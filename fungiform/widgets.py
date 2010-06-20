@@ -12,7 +12,7 @@ from itertools import chain
 
 from fungiform.utils import make_name, _force_dict, _make_widget,\
                             _value_matches_choice, _force_list,\
-                            _to_string, _to_list, escape, Markup
+                            _to_string, _to_list, Markup, soft_unicode
 from fungiform.recaptcha import get_recaptcha_html
 
 
@@ -188,7 +188,7 @@ class Widget(_Renderable):
     def label(self):
         """The label for the widget."""
         if self._field.label is not None:
-            return Label(self._field, unicode(self._field.label), self.id)
+            return Label(self._field, soft_unicode(self._field.label), self.id)
 
     @property
     def help_text(self):
@@ -233,7 +233,7 @@ class Widget(_Renderable):
         rv.append(html.dd(self(**attrs)))
         if self.help_text:
             rv.append(html.dd(self.help_text, class_='explanation'))
-        return u''.join(rv)
+        return Markup(u''.join(rv))
 
     def _attr_setdefault(self, attrs):
         """Add an ID to the attrs if there is none."""
@@ -256,7 +256,7 @@ class Label(_Renderable):
     def render(self, **attrs):
         html = self._field.form.html_builder
         attrs.setdefault('for', self.linked_to)
-        return html.label(escape(self.text), **attrs)
+        return html.label(self.text, **attrs)
 
 
 class InternalWidget(Widget):
@@ -338,7 +338,7 @@ class Checkbox(Widget):
         if self.help_text:
             data += u' ' + html.label(self.help_text, class_='explanation',
                                       for_=self.id)
-        return data
+        return Markup(data)
 
     def as_dd(self, **attrs):
         """Return a dt/dd item."""
@@ -348,7 +348,7 @@ class Checkbox(Widget):
         if label:
             rv.append(html.dt(label()))
         rv.append(html.dd(self.with_help_text()))
-        return u''.join(rv)
+        return Markup(u''.join(rv))
 
     def as_li(self, **attrs):
         """Return a li item."""

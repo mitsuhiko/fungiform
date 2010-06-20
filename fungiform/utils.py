@@ -99,6 +99,15 @@ def _make_widget(field, name, value, errors):
     return field.widget(field, name, value, errors)
 
 
+def soft_unicode(s):
+    """Make something unicode if it's not a string or respond to `__html__`"""
+    if hasattr(s, '__html__'):
+        return s
+    elif not isinstance(s, basestring):
+        return unicode(s)
+    return s
+
+
 def escape(s):
     """Replace special characters "&", '"', "<" and ">" to HTML-safe sequences.
 
@@ -481,16 +490,17 @@ class HTMLBuilder(object):
                 write(' ' + key + value)
             if not children and tag in self._empty_elements:
                 write(self._dialect == 'xhtml' and ' />' or '>')
-                return ''.join(buffer)
+                return Markup(u''.join(buffer))
             write('>')
-            children_as_string = ''.join(unicode(x) for x in children
-                                         if x is not None)
-            if children_as_string:
-                if tag in self._plaintext_elements:
-                    children_as_string = escape(children_as_string)
-                elif tag in self._c_like_cdata and self._dialect == 'xhtml':
+            if tag in self._c_like_cdata:
+                children_as_string = u''.join(unicode(x) for x in children
+                                              if x is not None)
+                if self._dialect == 'xhtml':
                     children_as_string = '/*<![CDATA[*/%s/*]]>*/' % \
-                                         children_as_string
+                        children_as_string
+            else:
+                children_as_string = Markup(u''.join(escape(x) for x in children
+                                            if x is not None))
             buffer.extend((children_as_string, '</%s>' % tag))
             return Markup(u''.join(buffer))
         return proxy
