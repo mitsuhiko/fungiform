@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
     fungiform.tests.widgets
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~
 
     The unittests for the widgets.
 
