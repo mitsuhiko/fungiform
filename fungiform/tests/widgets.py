@@ -5,7 +5,7 @@
 
     The unittests for the widgets.
 
-    :copyright: (c) 2010 by the Fungiform Test.
+    :copyright: (c) 2010 by the Fungiform Team.
     :license: BSD, see LICENSE for more details.
 """
 import unittest

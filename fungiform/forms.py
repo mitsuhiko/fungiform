@@ -888,7 +888,7 @@ class FormBase(object):
 
     Form fields are bound to the form on form instanciation.  This makes it
     possible to modify a particular instance of the form.  For example you
-    can create an instance of it and drop some fiels by using
+    can create an instance of it and drop some fields by using
     ``del form.fields['name']`` or reassign choices of choice fields.  It's
     however not easily possible to add new fields to an instance because newly
     added fields wouldn't be bound.  The fields that are stored directly on
@@ -910,8 +910,8 @@ class FormBase(object):
     >>> form['status']
     u'happy'
 
-    Forms can be recaptcha protected by setting `catcha_protected` to `True`.
-    If catpcha protection is enabled the catcha has to be rendered from the
+    Forms can be recaptcha protected by setting `captcha_protected` to `True`.
+    If captcha protection is enabled the captcha has to be rendered from the
     widget created, like a field.
 
     Forms are CSRF protected if they are created in the context of an active
