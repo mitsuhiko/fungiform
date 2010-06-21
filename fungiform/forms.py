@@ -104,7 +104,7 @@ class Field(object):
     validate_on_omission = False
 
     def __init__(self, label=None, help_text=None, validators=None,
-                 widget=None, messages=None):
+                 widget=None, messages=None, sentinel=False):
         self._position_hint = _next_position_hint()
         self.label = label
         self.help_text = help_text
@@ -117,6 +117,7 @@ class Field(object):
         if messages:
             self.messages = self.messages.copy()
             self.messages.update(messages)
+        self.sentinel = sentinel
         assert not issubclass(self.widget, widgets.InternalWidget), \
             'can\'t use internal widgets as widgets for fields'
 
@@ -143,6 +144,23 @@ class Field(object):
         if self.should_validate(value):
             for validate in self.validators:
                 validate(self.form, value)
+
+    def empty_as_item(self, value):
+        """Multiple fields use this method to decide if the field is
+        considered empty or not.  Empty fields are not validated and
+        stored.  For this function to ever return `True` it has to be
+        defined as sentinel.  Example::
+
+            items = Multiple(Mapping(
+                name = TextField(required=True),
+                count = IntegerField(required=True, sentinel=True)
+            ))
+
+        If an the count is ommited the item will not be validated and
+        added to the list.  As soon as a value is inserted to the
+        count field, validation happens.
+        """
+        return self.sentinel and not value
 
     def should_validate(self, value):
         """Per default validate if the value is not None.  This method is
@@ -220,6 +238,12 @@ class Mapping(Field):
                                 'arguments provided.')
             self.fields = OrderedDict(fields)
         self.fields.sort(key=lambda i: i[1]._position_hint)
+
+    def empty_as_item(self, values):
+        for name, field in self.fields.iteritems():
+            if field.empty_as_item(values.get(name)):
+                return True
+        return False
 
     def convert(self, value):
         value = _force_dict(value)
@@ -317,8 +341,18 @@ class Multiple(Field):
     def multiple_choices(self):
         return self.max_size is None or self.max_size > 1
 
+    def empty_as_item(self, values):
+        for idx, value in enumerate(values):
+            if self.field.empty_as_item(value):
+                return True
+        return False
+
+    def _remove_empty(self, values):
+        return [(idx, value) for idx, value in enumerate(values)
+                if not self.field.empty_as_item(value)]
+
     def convert(self, value):
-        value = _force_list(value)
+        value = self._remove_empty(_force_list(value))
         if self.min_size is not None and len(value) < self.min_size:
             message = self.messages['too_small']
             if message is None:
@@ -337,7 +371,7 @@ class Multiple(Field):
             raise ValidationError(message)
         result = []
         errors = {}
-        for idx, item in enumerate(value):
+        for idx, item in value:
             try:
                 result.append(self.field(item))
             except ValidationError, e:
@@ -429,8 +463,9 @@ class TextField(Field):
 
     def __init__(self, label=None, help_text=None, required=False,
                  min_length=None, max_length=None, validators=None,
-                 widget=None, messages=None):
-        Field.__init__(self, label, help_text, validators, widget, messages)
+                 widget=None, messages=None, sentinel=False):
+        Field.__init__(self, label, help_text, validators, widget, messages,
+                       sentinel)
         self.required = required
         self.min_length = min_length
         self.max_length = max_length
@@ -522,8 +557,10 @@ class ChoiceField(Field):
     messages = dict(invalid_choice=None)
 
     def __init__(self, label=None, help_text=None, required=True,
-                 choices=None, validators=None, widget=None, messages=None):
-        Field.__init__(self, label, help_text, validators, widget, messages)
+                 choices=None, validators=None, widget=None, messages=None,
+                 sentinel=False):
+        Field.__init__(self, label, help_text, validators, widget, messages,
+                       sentinel)
         self.required = required
         self.choices = choices
 
@@ -557,9 +594,9 @@ class MultiChoiceField(ChoiceField):
 
     def __init__(self, label=None, help_text=None, choices=None,
                  min_size=None, max_size=None, validators=None,
-                 widget=None, messages=None):
+                 widget=None, messages=None, sentinel=False):
         ChoiceField.__init__(self, label, help_text, min_size > 0, choices,
-                             validators, widget, messages)
+                             validators, widget, messages, sentinel)
         self.min_size = min_size
         self.max_size = max_size
 
@@ -631,8 +668,9 @@ class IntegerField(Field):
 
     def __init__(self, label=None, help_text=None, required=False,
                  min_value=None, max_value=None, validators=None,
-                 widget=None, messages=None):
-        Field.__init__(self, label, help_text, validators, widget, messages)
+                 widget=None, messages=None, sentinel=False):
+        Field.__init__(self, label, help_text, validators, widget, messages,
+                       sentinel)
         self.required = required
         self.min_value = min_value
         self.max_value = max_value

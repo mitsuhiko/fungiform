@@ -21,7 +21,7 @@ class WidgetTestCase(unittest.TestCase):
                                         widget=widgets.CheckboxGroup)
         self.assertEqual(
             u'<form action="" method="post">'
-            u'<dl>'
+            u'<dl class="mapping">'
               u'<dt><label for="f_mc">Foo</label></dt>'
               u'<dd>'
                 u'<ul id="f_mc" class="choicegroup">'

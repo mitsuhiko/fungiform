@@ -16,6 +16,13 @@ from fungiform.utils import make_name, _force_dict, _make_widget,\
 from fungiform.recaptcha import get_recaptcha_html
 
 
+def _add_class(attrs, classname):
+    """Adds a class to an attribute dict"""
+    attrs['class'] = u' '.join(filter(None, [attrs.pop('class', u''),
+                                             attrs.pop('class_', u'')]) +
+                               [classname])
+
+
 def _iter_choices(choices):
     """Iterate over choices."""
     if choices is not None:
@@ -143,6 +150,13 @@ class Widget(_Renderable):
         self._value = value
         self._all_errors = all_errors
         self.name = name
+
+    @property
+    def empty_as_item(self):
+        """Works like the method on the field just for the widget plus
+        the bound value.
+        """
+        return self._field.empty_as_item(self.value)
 
     def hidden(self):
         """Return one or multiple hidden fields for the current value.  This
@@ -458,14 +472,14 @@ class _InputGroup(Widget):
         if class_ is None:
             class_ = 'choicegroup'
         attrs['class'] = class_
-        choices = [u'<li>%s %s</li>' % (
+        choices = [Markup(u'<li>%s %s</li>') % (
             choice(),
             label and choice.label() or u''
         ) for choice in self.choices]
         if not choices:
             if empty_msg is None:
                 empty_msg = _('No choices.')
-            choices.append(u'<li>%s</li>' % _(empty_msg))
+            choices.append(Markup(u'<li>%s</li>') % _(empty_msg))
         return Markup(list_type(*choices, **attrs))
 
     def as_ul(self, **attrs):
@@ -519,6 +533,7 @@ class MappingWidget(Widget):
         return subwidget
 
     def as_dl(self, **attrs):
+        _add_class(attrs, 'mapping')
         html = self._field.form.html_builder
         return html.dl(*[x.as_dd() for x in self], **attrs)
 
@@ -635,10 +650,19 @@ class ListWidget(Widget):
     def _as_list(self, factory, attrs):
         if attrs.pop('hide_empty', False) and not self:
             return u''
+        _add_class(attrs, 'multiple-items')
         html = self._field.form.html_builder
         items = []
-        for index in xrange(len(self) + attrs.pop('extra_rows', 1)):
-            items.append(html.li(self[index]()))
+        empty_streak = 0
+        for index in xrange(len(self)):
+            subwidget = self[index]
+            empty_streak = empty_streak + 1 if subwidget.empty_as_item else 0
+            items.append(html.li(subwidget()))
+
+        # insert empty widgets at the end if necessary
+        for offset in xrange(attrs.pop('extra_rows', 1) - empty_streak):
+            items.append(html.li(self[len(items) + offset + 1]()))
+
         return factory(*items, **attrs)
 
     def __getitem__(self, index):
