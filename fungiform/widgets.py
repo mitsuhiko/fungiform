@@ -610,7 +610,7 @@ class FormWidget(MappingWidget):
         # support jinja's caller
         caller = attrs.pop('caller', None)
         if caller is not None:
-            body = caller()
+            body = Markup(caller())
         else:
             body = self.as_dl() + self.default_actions()
 
