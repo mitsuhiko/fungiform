@@ -156,7 +156,7 @@ class Field(object):
                 count = IntegerField(required=True, sentinel=True)
             ))
 
-        If an the count is ommited the item will not be validated and
+        If the count is omitted the item will not be validated and
         added to the list.  As soon as a value is inserted to the
         count field, validation happens.
         """

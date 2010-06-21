@@ -313,7 +313,7 @@ class Markup(unicode):
     >>> class Foo(object):
     ...  def __html__(self):
     ...   return '<a href="#">foo</a>'
-    ... 
+    ...
     >>> Markup(Foo())
     u'<a href="#">foo</a>'
 
@@ -371,6 +371,7 @@ class Markup(unicode):
 
     def make_wrapper(name):
         orig = getattr(unicode, name)
+
         def func(self, *args, **kwargs):
             args = _escape_argspec(list(args), enumerate(args))
             _escape_argspec(kwargs, kwargs.iteritems())
@@ -496,11 +497,11 @@ class HTMLBuilder(object):
                 children_as_string = u''.join(unicode(x) for x in children
                                               if x is not None)
                 if self._dialect == 'xhtml':
-                    children_as_string = '/*<![CDATA[*/%s/*]]>*/' % \
-                        children_as_string
+                    children_as_string = \
+                        '/*<![CDATA[*/%s/*]]>*/' % children_as_string
             else:
-                children_as_string = Markup(u''.join(escape(x) for x in children
-                                            if x is not None))
+                children_as_string = Markup(u''.join(
+                    escape(x) for x in children if x is not None))
             buffer.extend((children_as_string, '</%s>' % tag))
             return Markup(u''.join(buffer))
         return proxy

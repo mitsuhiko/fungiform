@@ -55,7 +55,8 @@ class UtilsTestCase(unittest.TestCase):
         s1 = ('This string contains "<tags>" & "double-quotes", '
               'and single quotes "\'".')
         q1 = utils.Markup('This string contains &#34;&lt;tags&gt;&#34; &amp; '
-                          '&#34;double-quotes&#34;, and single quotes &#34;\'&#34;.')
+                          '&#34;double-quotes&#34;, and single quotes '
+                          '&#34;\'&#34;.')
         self.assertEqual(utils.escape(None), '')
         self.assertEqual(utils.escape(s1), q1)
 
