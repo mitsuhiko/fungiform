@@ -520,10 +520,18 @@ class DateTimeField(Field):
     messages = dict(invalid_date=None)
 
     def __init__(self, label=None, help_text=None, required=False,
-                 tzname=None, validators=None, widget=None, messages=None):
+                 tzinfo=None, validators=None, widget=None, messages=None,
+                 date_formats=None, time_formats=None):
         Field.__init__(self, label, help_text, validators, widget, messages)
         self.required = required
-        self.tzinfo = get_timezone(tzname)
+        self._tzinfo = get_timezone(tzinfo)
+        self.date_formats = date_formats
+        self.time_formats = time_formats
+
+    @property
+    def tzinfo(self):
+        tzinfo = self._tzinfo
+        return tzinfo() if hasattr(tzinfo, '__call__') else tzinfo
 
     def convert(self, value):
         if isinstance(value, datetime):
@@ -534,7 +542,9 @@ class DateTimeField(Field):
                 raise ValidationError(self.messages['required'])
             return None
         try:
-            return parse_datetime(value, tzinfo=self.tzinfo)
+            return parse_datetime(value, tzinfo=self.tzinfo,
+                                  date_formats=self.date_formats,
+                                  time_formats=self.time_formats)
         except ValueError:
             message = self.messages['invalid_date']
             if message is None:
@@ -563,9 +573,11 @@ class DateField(Field):
     messages = dict(invalid_date=None)
 
     def __init__(self, label=None, help_text=None, required=False,
-                 validators=None, widget=None, messages=None):
+                 validators=None, widget=None, messages=None,
+                 date_formats=None):
         Field.__init__(self, label, help_text, validators, widget, messages)
         self.required = required
+        self.date_formats = date_formats
 
     def convert(self, value):
         if isinstance(value, date):
@@ -576,7 +588,7 @@ class DateField(Field):
                 raise ValidationError(self.messages['required'])
             return None
         try:
-            return parse_date(value)
+            return parse_date(value, date_formats=self.date_formats)
         except ValueError:
             message = self.messages['invalid_date']
             if message is None:

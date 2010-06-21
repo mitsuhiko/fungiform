@@ -731,10 +731,13 @@ except ImportError, exc:
         raise exc
     to_timezone = to_utc
 
-    def get_timezone(name=None):
-        if name is None:
+    def get_timezone(tzinfo=None):
+        if tzinfo is None:
             return None
-        raise exc
+        if isinstance(tzinfo, basestring):
+            raise exc
+        # Return the object itself: it's probably a tzinfo object
+        return tzinfo
 
 else:
 
@@ -750,13 +753,14 @@ else:
             datetime = datetime.replace(tzinfo=UTC)
         return tzinfo.normalize(datetime.astimezone(tzinfo))
 
-    def get_timezone(name=None):
-        """Return the timezone for the given identifier or the timezone
-        of the application based on the configuration.
-        """
-        if name is None:
+    def get_timezone(tzinfo=None):
+        """Return the timezone for the given identifier."""
+        if tzinfo is None:
             return UTC
-        return timezone(name)
+        if isinstance(tzinfo, basestring):
+            return timezone(tzinfo)
+        # Return the object itself: it's probably a tzinfo object
+        return tzinfo
 
 
 def format_system_datetime(datetime=None, tzinfo=None):
@@ -784,7 +788,7 @@ def format_system_date(date=None):
     return u'%d-%02d-%02d' % (date.year, date.month, date.day)
 
 
-def parse_datetime(string, tzinfo=None):
+def parse_datetime(string, tzinfo=None, date_formats=None, time_formats=None):
     """Parses a string into a datetime object.  Per default a conversion
     from the local timezone to UTC is performed but returned as naive
     datetime object (that is tzinfo being None).  If tzinfo is not used,
@@ -813,8 +817,10 @@ def parse_datetime(string, tzinfo=None):
     except ValueError:
         pass
 
+    if not time_formats:
+        time_formats = TIME_FORMATS
     # no go with time only, and current day
-    for fmt in TIME_FORMATS:
+    for fmt in time_formats:
         try:
             val = convert(fmt)
         except ValueError:
@@ -825,11 +831,13 @@ def parse_datetime(string, tzinfo=None):
 
     # now try various types of date + time strings
     def combined():
-        for t_fmt in TIME_FORMATS:
-            for d_fmt in DATE_FORMATS:
+        for t_fmt in time_formats:
+            for d_fmt in date_formats:
                 yield t_fmt + ' ' + d_fmt
                 yield d_fmt + ' ' + t_fmt
 
+    if not date_formats:
+        date_formats = DATE_FORMATS
     for fmt in combined():
         try:
             return convert(fmt)
@@ -839,7 +847,7 @@ def parse_datetime(string, tzinfo=None):
     raise ValueError('invalid date format')
 
 
-def parse_date(string):
+def parse_date(string, date_formats=None):
     """Parses a string into a date object."""
     # shortcut: string as None or "today" returns the current date.
     if string is None or string.lower() in ('today',):
@@ -856,7 +864,7 @@ def parse_date(string):
         pass
 
     # now try various types of date
-    for fmt in DATE_FORMATS:
+    for fmt in date_formats or DATE_FORMATS:
         try:
             return convert(fmt)
         except ValueError:
