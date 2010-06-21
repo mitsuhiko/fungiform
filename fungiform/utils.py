@@ -11,7 +11,12 @@
 import re
 from copy import deepcopy
 from itertools import izip, imap
+from datetime import datetime, date
+from time import strptime
 
+DATE_FORMATS = ['%m/%d/%Y', '%d/%m/%Y', '%Y%m%d', '%d. %m. %Y',
+                '%m/%d/%y', '%d/%m/%y', '%d%m%y', '%m%d%y', '%y%m%d']
+TIME_FORMATS = ['%H:%M', '%H:%M:%S', '%I:%M %p', '%I:%M:%S %p']
 _missing = object()
 
 
@@ -710,3 +715,151 @@ class OrderedDict(dict):
 
     __copy__ = copy
     __iter__ = iterkeys
+
+
+# Date and Time
+
+try:
+    from pytz import timezone, UTC
+except ImportError, exc:
+
+    # Naive functions, if the pytz module cannot be imported.
+
+    def to_utc(datetime, tzinfo=None):
+        if tzinfo is None:
+            return datetime
+        raise exc
+    to_timezone = to_utc
+
+    def get_timezone(name=None):
+        if name is None:
+            return None
+        raise exc
+
+else:
+
+    def to_utc(datetime, tzinfo=UTC):
+        """Convert a datetime object to UTC and drop tzinfo."""
+        if datetime.tzinfo is None:
+            datetime = tzinfo.localize(datetime)
+        return datetime.astimezone(UTC).replace(tzinfo=None)
+
+    def to_timezone(datetime, tzinfo=UTC):
+        """Convert a datetime object to the local timezone."""
+        if datetime.tzinfo is None:
+            datetime = datetime.replace(tzinfo=UTC)
+        return tzinfo.normalize(datetime.astimezone(tzinfo))
+
+    def get_timezone(name=None):
+        """Return the timezone for the given identifier or the timezone
+        of the application based on the configuration.
+        """
+        if name is None:
+            return UTC
+        return timezone(name)
+
+
+def format_system_datetime(datetime=None, tzinfo=None):
+    """Formats a system datetime.
+
+    (Format: YYYY-MM-DD hh:mm and in the user timezone
+    if tzinfo is provided)
+    """
+    if tzinfo:
+        datetime = to_timezone(datetime, tzinfo)
+    return u'%d-%02d-%02d %02d:%02d' % (
+        datetime.year,
+        datetime.month,
+        datetime.day,
+        datetime.hour,
+        datetime.minute
+    )
+
+
+def format_system_date(date=None):
+    """Formats a system date.
+
+    (Format: YYYY-MM-DD)
+    """
+    return u'%d-%02d-%02d' % (date.year, date.month, date.day)
+
+
+def parse_datetime(string, tzinfo=None):
+    """Parses a string into a datetime object.  Per default a conversion
+    from the local timezone to UTC is performed but returned as naive
+    datetime object (that is tzinfo being None).  If tzinfo is not used,
+    the string is expected in UTC.
+
+    The return value is **always** a naive datetime object in UTC.  This
+    function should be considered of a lenient counterpart of
+    `format_system_datetime`.
+    """
+    # shortcut: string as None or "now" returns the current timestamp.
+    if string is None or string.lower() in ('now',):
+        return datetime.utcnow().replace(microsecond=0)
+
+    def convert(format):
+        """Helper that parses the string and convers the timezone."""
+        rv = datetime(*strptime(string, format)[:7])
+        if tzinfo:
+            rv = to_utc(rv, tzinfo)
+        return rv.replace(microsecond=0)
+
+    # first of all try the following format because this is the format
+    # Texpress will output by default for any date time string in the
+    # administration panel.
+    try:
+        return convert(u'%Y-%m-%d %H:%M')
+    except ValueError:
+        pass
+
+    # no go with time only, and current day
+    for fmt in TIME_FORMATS:
+        try:
+            val = convert(fmt)
+        except ValueError:
+            continue
+        return to_utc(datetime.utcnow().replace(hour=val.hour,
+                      minute=val.minute, second=val.second, microsecond=0),
+                      tzinfo=tzinfo)
+
+    # now try various types of date + time strings
+    def combined():
+        for t_fmt in TIME_FORMATS:
+            for d_fmt in DATE_FORMATS:
+                yield t_fmt + ' ' + d_fmt
+                yield d_fmt + ' ' + t_fmt
+
+    for fmt in combined():
+        try:
+            return convert(fmt)
+        except ValueError:
+            pass
+
+    raise ValueError('invalid date format')
+
+
+def parse_date(string):
+    """Parses a string into a date object."""
+    # shortcut: string as None or "today" returns the current date.
+    if string is None or string.lower() in ('today',):
+        return date.today()
+
+    def convert(format):
+        """Helper that parses the string."""
+        return date(*strptime(string, format)[:3])
+
+    # first of all try the ISO 8601 format.
+    try:
+        return convert(u'%Y-%m-%d')
+    except ValueError:
+        pass
+
+    # now try various types of date
+    for fmt in DATE_FORMATS:
+        try:
+            return convert(fmt)
+        except ValueError:
+            pass
+
+    raise ValueError('invalid date format')

@@ -26,7 +26,7 @@
     :copyright: (c) 2010 by the Fungiform Team.
     :license: BSD, see LICENSE for more details.
 """
-from datetime import datetime
+from datetime import datetime, date
 from itertools import count
 from threading import Lock
 from urlparse import urljoin
@@ -34,6 +34,8 @@ from urlparse import urljoin
 from fungiform import widgets
 from fungiform.exceptions import ValidationError, MultipleValidationErrors
 from fungiform.utils import OrderedDict, decode_form_data, \
+                            format_system_datetime, format_system_date, \
+                            parse_datetime, parse_date, get_timezone, \
                             _force_dict, _force_list, _to_string, _to_list, \
                             html, _make_widget, _value_matches_choice
 from fungiform.recaptcha import validate_recaptcha
@@ -42,8 +44,8 @@ from fungiform.csrf import get_csrf_token, invalidate_csrf_token
 
 
 __all__ = ['FormBase', 'Field', 'Mapping', 'Multiple', 'CommaSeparated',
-           'LineSeparated', 'TextField', 'ChoiceField',
-           'MultiChoiceField', 'IntegerField', 'BooleanField',
+           'LineSeparated', 'TextField', 'DateTimeField', 'DateField',
+           'ChoiceField', 'MultiChoiceField', 'IntegerField', 'BooleanField',
            'FormBase']
 
 
@@ -500,6 +502,91 @@ class TextField(Field):
     def should_validate(self, value):
         """Validate if the string is not empty."""
         return bool(value)
+
+
+class DateTimeField(Field):
+    """Field for datetime objects.
+
+    >>> field = DateTimeField()
+    >>> field('1970-01-12 00:00')
+    datetime.datetime(1970, 1, 12, 0, 0)
+
+    >>> field('foo')
+    Traceback (most recent call last):
+      ...
+    ValidationError: Please enter a valid date.
+    """
+
+    messages = dict(invalid_date=None)
+
+    def __init__(self, label=None, help_text=None, required=False,
+                 tzname=None, validators=None, widget=None, messages=None):
+        Field.__init__(self, label, help_text, validators, widget, messages)
+        self.required = required
+        self.tzinfo = get_timezone(tzname)
+
+    def convert(self, value):
+        if isinstance(value, datetime):
+            return value
+        value = _to_string(value)
+        if not value:
+            if self.required:
+                raise ValidationError(self.messages['required'])
+            return None
+        try:
+            return parse_datetime(value, tzinfo=self.tzinfo)
+        except ValueError:
+            message = self.messages['invalid_date']
+            if message is None:
+                message = self.gettext('Please enter a valid date.')
+            raise ValidationError(message)
+
+    def to_primitive(self, value):
+        if isinstance(value, datetime):
+            value = format_system_datetime(value, tzinfo=self.tzinfo)
+        return value
+
+
+class DateField(Field):
+    """Field for date objects.
+
+    >>> field = DateField()
+    >>> field('1970-01-12')
+    datetime.date(1970, 1, 12)
+
+    >>> field('foo')
+    Traceback (most recent call last):
+      ...
+    ValidationError: Please enter a valid date.
+    """
+
+    messages = dict(invalid_date=None)
+
+    def __init__(self, label=None, help_text=None, required=False,
+                 validators=None, widget=None, messages=None):
+        Field.__init__(self, label, help_text, validators, widget, messages)
+        self.required = required
+
+    def convert(self, value):
+        if isinstance(value, date):
+            return value
+        value = _to_string(value)
+        if not value:
+            if self.required:
+                raise ValidationError(self.messages['required'])
+            return None
+        try:
+            return parse_date(value)
+        except ValueError:
+            message = self.messages['invalid_date']
+            if message is None:
+                message = self.gettext('Please enter a valid date.')
+            raise ValidationError(message)
+
+    def to_primitive(self, value):
+        if isinstance(value, date):
+            value = format_system_date(value)
+        return value
 
 
 class ChoiceField(Field):
