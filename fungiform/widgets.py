@@ -17,9 +17,9 @@ from fungiform.recaptcha import get_recaptcha_html
 
 
 def _add_class(attrs, classname):
-    """Adds a class to an attribute dict"""
-    attrs['class'] = u' '.join(filter(None, [attrs.pop('class', u''),
-                                             attrs.pop('class_', u'')]) +
+    """Adds a class to an attribute dict."""
+    attrs['class'] = u' '.join([c for c in [attrs.pop('class', u''),
+                                            attrs.pop('class_', u'')] if c] +
                                [classname])
 
 
@@ -661,7 +661,7 @@ class ListWidget(Widget):
 
         # insert empty widgets at the end if necessary
         for offset in xrange(attrs.pop('extra_rows', 1) - empty_streak):
-            items.append(html.li(self[len(items) + offset + 1]()))
+            items.append(html.li(self[len(items) + offset]()))
 
         return factory(*items, **attrs)
 

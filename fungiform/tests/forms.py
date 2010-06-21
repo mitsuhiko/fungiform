@@ -51,6 +51,29 @@ class FormTestCase(unittest.TestCase):
         self.assertEqual(form.data['ints'], [42, 125, 23])
         self.assertEqual(form.data['strings'], 'foo bar baz'.split())
 
+    def test_form_as_field(self):
+        class AddressForm(forms.FormBase):
+            street = forms.TextField()
+            zipcode = forms.IntegerField()
+
+        class MyForm(forms.FormBase):
+            username = forms.TextField()
+            addresses = forms.Multiple(AddressForm.as_field())
+
+        form = MyForm()
+        form.validate({
+            'username':     'foobar',
+            'addresses.0.street':   'Ici',
+            'addresses.0.zipcode':  '11111',
+            'addresses.2.street':   'Ailleurs',
+            'addresses.2.zipcode':  '55555',
+        })
+        self.assertEqual(form.data, {
+            'username': u'foobar',
+            'addresses': [{'street': u'Ici', 'zipcode': 11111},
+                          {'street': u'Ailleurs', 'zipcode': 55555}],
+        })
+
 
 def suite():
     suite = unittest.TestSuite()
