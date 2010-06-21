@@ -955,7 +955,7 @@ class FormBase(object):
 
     You can also validate multiple fields in the context of other fields.
     That validation is performed after all other validations.  Just add a
-    method called ``context_validate`` that is passed the dict of all fields::
+    method called ``context_validate`` that is passed the dict of all fields:
 
     >>> class RegisterForm(FormBase):
     ...     username = TextField(required=True)
@@ -966,7 +966,7 @@ class FormBase(object):
     ...         if data['password'] != data['password_again']:
     ...             message = u'The two passwords must be the same'
     ...             raise ValidationError(message)
-
+    ...
     >>> form = RegisterForm()
     >>> form.validate({'username': 'admin', 'password': 'blah',
     ...                'password_again': 'blag'})
