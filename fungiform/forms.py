@@ -1129,13 +1129,18 @@ class FormBase(object):
             seq = self.errors[field] = widgets.ErrorList(self)
         seq.append(error)
 
-    def validate(self, data=None):
+    def validate(self, data=None, from_flat=True):
         """Validate the form against the data passed.  If no data is provided
-        the form data of the current request is taken.
+        the form data of the current request is taken.  By default a flat
+        representation of the data is assumed.  If you already have a non-flat
+        representation of the data (JSON for example) you can disable that
+        with ``from_flat=False``.
         """
         if data is None:
             data = self._autodiscover_data()
-        self.raw_data = decode_form_data(data)
+        if from_flat:
+            data = decode_form_data(data)
+        self.raw_data = data
 
         # for each field in the root that requires validation on value
         # omission we add `None` into the raw data dict.  Because the
