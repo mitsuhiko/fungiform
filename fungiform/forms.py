@@ -741,6 +741,76 @@ class MultiChoiceField(ChoiceField):
         return map(unicode, _force_list(value))
 
 
+class FloatField(Field):
+    """Field for floating-point numbers.
+
+    >>> field = FloatField(min_value=0,max_value=99.9)
+    >>> field('13')
+    13.0
+
+    >>> field('13.123')
+    13.122999999999999
+
+    >>> field('thirteen')
+    Traceback (most recent call last):
+      ...
+    fungiform.exceptions.ValidationError: Please enter a floating-point number.
+
+    >>> field(101)
+    Traceback (most recent call last):
+      ...
+    fungiform.exceptions.ValidationError: Ensure this value is less than or
+    equal to 99.9.
+    """
+
+    messages = dict(
+        too_small=None,
+        too_big=None,
+        no_float=None
+    )
+
+    def __init__(self, label=None, help_text=None, required=False,
+                 min_value=None, max_value=None, validators=None,
+                 widget=None, messages=None, sentinel=False):
+        Field.__init__(self, label, help_text, validators, widget, messages,
+                       sentinel)
+        self.required = required
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def convert(self, value):
+        value = _to_string(value)
+        if not value:
+            if self.required:
+                message = self.messages['required']
+                if message is None:
+                    message = self.gettext(u'This field is required.')
+                raise ValidationError(message)
+            return None
+        try:
+            value = float(value)
+        except ValueError:
+            message = self.messages['no_float']
+            if message is None:
+                message = self.gettext('Please enter a floating-point number.')
+            raise ValidationError(message)
+
+        if self.min_value is not None and value < self.min_value:
+            message = self.messages['too_small']
+            if message is None:
+                message = self.gettext(u'Ensure this value is greater than or '
+                                       u'equal to %s.') % self.min_value
+            raise ValidationError(message)
+        if self.max_value is not None and value > self.max_value:
+            message = self.messages['too_big']
+            if message is None:
+                message = self.gettext(u'Ensure this value is less than or '
+                                       u'equal to %s.') % self.max_value
+            raise ValidationError(message)
+
+        return float(value)
+
+
 class IntegerField(Field):
     """Field for integers.
 
