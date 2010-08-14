@@ -88,7 +88,7 @@ def get_redirect_target(environ, user_url=None, invalid_targets=(),
     root_parts = urlparse(root_url)
 
     check_parts = urlparse(urljoin(root_url, check_target))
-    check_query = urldecode(check_parts[4])
+    check_query = dict(urldecode(check_parts[4]))
 
     def url_equals(to_check):
         if to_check[:4] != check_parts[:4]:
