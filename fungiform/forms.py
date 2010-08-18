@@ -37,7 +37,8 @@ from fungiform.utils import OrderedDict, decode_form_data, \
                             format_system_datetime, format_system_date, \
                             parse_datetime, parse_date, get_timezone, \
                             _force_dict, _force_list, _to_string, _to_list, \
-                            html, _make_widget, _value_matches_choice
+                            html, _make_widget, _value_matches_choice, \
+                            get_current_url
 from fungiform.recaptcha import validate_recaptcha
 from fungiform.redirects import get_redirect_target
 from fungiform.csrf import get_csrf_token, invalidate_csrf_token
