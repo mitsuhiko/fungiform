@@ -22,7 +22,7 @@ except ImportError:
 
 setup(
     name = 'Fungiform',
-    version = '0.1',
+    version = '0.2',
     url = 'http://github.com/mitsuhiko/fungiform',
     license = 'BSD License',
     author = 'Armin Ronacher',
