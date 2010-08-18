@@ -44,9 +44,9 @@ from fungiform.csrf import get_csrf_token, invalidate_csrf_token
 
 
 __all__ = ['FormBase', 'Field', 'Mapping', 'Multiple', 'CommaSeparated',
-           'LineSeparated', 'TextField', 'DateTimeField', 'DateField',
-           'ChoiceField', 'MultiChoiceField', 'IntegerField', 'BooleanField',
-           'FormBase']
+           'LineSeparated', 'TextField', 'PasswordField', 'DateTimeField',
+           'DateField', 'ChoiceField', 'MultiChoiceField', 'IntegerField',
+           'BooleanField', 'FormBase']
 
 
 _last_position_hint = -1
@@ -502,6 +502,12 @@ class TextField(Field):
     def should_validate(self, value):
         """Validate if the string is not empty."""
         return bool(value)
+
+
+class PasswordField(TextField):
+    """A special :class:`TextField` for passwords."""
+
+    widget = widgets.PasswordInput
 
 
 class DateTimeField(Field):
