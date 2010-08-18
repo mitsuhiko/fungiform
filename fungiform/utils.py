@@ -9,6 +9,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import re
+import urllib
 from copy import deepcopy
 from itertools import izip, imap
 from datetime import datetime, date
