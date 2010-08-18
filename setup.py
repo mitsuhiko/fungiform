@@ -4,7 +4,13 @@
     Fungiform
     ~~~~~~~~~
 
-    :copyright: (c) 2009 by Armin Ronacher, see AUTHORS for more details.
+    A form handling system that previously was used for Pocoo's Zine
+    and Plurk's Solace software.  Unbundled into a separate library that
+    is framework independent.
+
+    This is still a preview release.  Check the source for more information.
+
+    :copyright: (c) 2010 by Armin Ronacher, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
 
