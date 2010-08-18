@@ -760,13 +760,12 @@ class FloatField(Field):
     >>> field('thirteen')
     Traceback (most recent call last):
       ...
-    fungiform.exceptions.ValidationError: Please enter a floating-point number.
+    ValidationError: Please enter a floating-point number.
 
     >>> field(101)
     Traceback (most recent call last):
       ...
-    fungiform.exceptions.ValidationError: Ensure this value is less than or
-    equal to 99.9.
+    ValidationError: Ensure this value is less than or equal to 99.9.
     """
 
     messages = dict(
