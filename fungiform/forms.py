@@ -57,7 +57,7 @@ _next_position_hint = count().next
 
 _dummy_translations = (type('_dummy_translations', (object,), {
     'ugettext':     lambda x, s: s,
-    'ungettext':    lambda x, s, p, n: [s, p](n != 1)
+    'ungettext':    lambda x, s, p, n: [s, p][n != 1]
 }))()
 
 
