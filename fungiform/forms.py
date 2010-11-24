@@ -481,7 +481,7 @@ class TextField(Field):
                 if message is None:
                     message = self.gettext(u'This field is required.')
                 raise ValidationError(message)
-        elif value:
+        if value:
             if self.min_length is not None and len(value) < self.min_length:
                 message = self.messages['too_short']
                 if message is None:
