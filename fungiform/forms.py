@@ -546,7 +546,10 @@ class DateTimeField(Field):
         value = _to_string(value)
         if not value:
             if self.required:
-                raise ValidationError(self.messages['required'])
+                message = self.messages['required']
+                if message is None:
+                    message = self.gettext(u'This field is required.')
+                raise ValidationError(message)
             return None
         try:
             return parse_datetime(value, tzinfo=self.tzinfo,
@@ -592,7 +595,10 @@ class DateField(Field):
         value = _to_string(value)
         if not value:
             if self.required:
-                raise ValidationError(self.messages['required'])
+                message = self.messages['required']
+                if message is None:
+                    message = self.gettext(u'This field is required.')
+                raise ValidationError(message)
             return None
         try:
             return parse_date(value, date_formats=self.date_formats)
